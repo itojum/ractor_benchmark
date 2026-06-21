@@ -13,7 +13,7 @@ module BasicModule
     puts "Build finished in %.3fs" % elapsed
   end
 
-  def files = Dir.children(Constants::APP_DIR)
+  def files = Dir.children(Constants::APP_DIR).filter { |file| file.end_with?('.md') }
 
   def process_file(input_path)
     data, body = parse_frontmatter(File.read(File.join(Constants::APP_DIR, input_path)))
