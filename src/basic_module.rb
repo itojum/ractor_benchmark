@@ -1,4 +1,5 @@
 require_relative './constants'
+require_relative './utils/memory_tracker'
 
 require 'mactor'
 require 'yaml'
@@ -7,10 +8,15 @@ require 'fileutils'
 
 module BasicModule
   def run
+    strategy = File.basename($PROGRAM_NAME, '.rb')
+
+    tracker = MemoryTracker.new.start
     start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     super
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
-    puts "Build finished in %.3fs" % elapsed
+    tracker.stop
+
+    print_result(strategy, elapsed, tracker)
   end
 
   def files = Dir.children(Constants::APP_DIR).filter { |file| file.end_with?('.md') }
@@ -36,6 +42,12 @@ module BasicModule
   def write_html(slug, html)
     FileUtils.mkdir_p(Constants::OUTPUT_DIR)
     File.write(File.join(Constants::OUTPUT_DIR, "#{slug}.html"), html)
+  end
+
+  private
+
+  def print_result(strategy, elapsed, tracker)
+    puts "[%s] %.3fs | peak %.1f MB" % [strategy, elapsed, tracker.peak_rss_kb / 1024.0]
   end
 
   module_function :process_file, :parse_frontmatter, :write_html
